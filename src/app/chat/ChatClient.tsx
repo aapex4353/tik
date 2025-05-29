@@ -114,7 +114,16 @@ export default function ChatClient() {
     const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
       const msgs: Message[] = [];
       querySnapshot.forEach((doc) => {
-        msgs.push({ id: doc.id, ...doc.data() } as Message);
+        const data = doc.data();
+        // Basic validation for createdAt
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+          msgs.push({ id: doc.id, ...data } as Message);
+        } else {
+          // Log or handle messages with invalid createdAt
+          console.warn("Message with invalid or missing createdAt field:", doc.id, data);
+          // Optionally, push with a null or client-generated timestamp, or filter out
+           msgs.push({ id: doc.id, ...data, createdAt: null } as Message);
+        }
       });
       setMessages(msgs);
     }, (error) => {
@@ -158,17 +167,16 @@ export default function ChatClient() {
             if (message && message.sender !== userName && (!message.readBy || !message.readBy[userName])) {
               if (!observedMessagesRef.current.has(messageId)) {
                  markMessageAsRead(messageId);
-                 observedMessagesRef.current.add(messageId); // Mark as processed to avoid re-triggering
+                 observedMessagesRef.current.add(messageId); 
               }
             }
           }
         });
-      }, { threshold: 0.8 }); // Mark as read when 80% visible
+      }, { threshold: 0.8 }); 
   
       messages.forEach(msg => {
         const element = document.getElementById(`message-${msg.id}`);
         if (element && !observedMessagesRef.current.has(msg.id)) {
-            // Only observe if message is from another user and not yet read by current user
             if (msg.sender !== userName && (!msg.readBy || !msg.readBy[userName])) {
                  intersectionObserverRef.current?.observe(element);
             }
@@ -183,18 +191,16 @@ export default function ChatClient() {
       }
     };
     
-    cleanupObserver(); // Clean up previous observer instance
-    setupObserver(); // Setup new one
+    cleanupObserver(); 
+    setupObserver(); 
   
     return () => cleanupObserver();
   }, [messages, userName, isNameSet, markMessageAsRead]);
 
 
-  // User presence and typing listener
   useEffect(() => {
     if (!isNameSet || !userName) return () => {};
 
-    // Heartbeat for lastSeen
     const presenceRef = doc(db, ROOM_ACTIVITY_COLLECTION, CHAT_ROOM_ID, PARTICIPANTS_SUBCOLLECTION, userName);
     const updatePresence = async () => {
       try {
@@ -206,7 +212,6 @@ export default function ChatClient() {
     updatePresence(); 
     const intervalId = setInterval(updatePresence, PRESENCE_UPDATE_INTERVAL_MS);
 
-    // Listener for active users and typing indicators
     const participantsCollectionRef = collection(db, ROOM_ACTIVITY_COLLECTION, CHAT_ROOM_ID, PARTICIPANTS_SUBCOLLECTION);
     const unsubscribeParticipants = onSnapshot(participantsCollectionRef, (snapshot) => {
       const now = Timestamp.now();
@@ -218,12 +223,10 @@ export default function ChatClient() {
 
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
-        if (data.name) { // Ensure participant doc has a name
-            // Active user count
+        if (data.name) { 
             if (data.lastSeen && data.lastSeen instanceof Timestamp && data.lastSeen.toMillis() > activeThreshold.toMillis()) {
             currentActiveCount++;
             }
-            // Typing users
             if (data.name !== userName && data.isTyping && data.typingTimestamp && data.typingTimestamp instanceof Timestamp && data.typingTimestamp.toMillis() > typingThreshold.toMillis()) {
             currentTypingUsers.push(data.name);
             }
@@ -255,7 +258,7 @@ export default function ChatClient() {
     return () => {
       clearInterval(intervalId);
       unsubscribeParticipants();
-      if (userName) updateUserTypingStatus(false); // Set not typing on unmount
+      if (userName) updateUserTypingStatus(false); 
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, [isNameSet, userName, toast, updateUserTypingStatus]);
@@ -303,7 +306,7 @@ export default function ChatClient() {
       console.error("Error sending message: ", error);
       toast({
         title: "Error Sending Message",
-        description: (error instanceof Error ? error.message : "Unknown error"),
+        description: (error instanceof Error ? error.message : "Unknown error: Ensure Firestore is set up and rules allow writes."),
         variant: "destructive",
       });
     }
@@ -404,7 +407,7 @@ export default function ChatClient() {
             </div>
         </div>
       </div>
-      <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-grow p-4 min-h-0" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((msg) => (
             <div
@@ -433,10 +436,10 @@ export default function ChatClient() {
                         ? format(msg.createdAt.toDate(), 'HH:mm')
                         : 'Sending...'}
                     </span>
-                    {msg.createdAt && typeof msg.createdAt.toDate === 'function' && (
-                       (msg.readBy && Object.keys(msg.readBy).some(reader => reader !== userName && msg.readBy[reader])) ? (
+                    {msg.createdAt && typeof msg.createdAt.toDate === 'function' && ( // Message sent
+                       (msg.readBy && Object.keys(msg.readBy).some(reader => reader !== userName && msg.readBy[reader])) ? ( // Seen by at least one other
                         <CheckCheck className="h-4 w-4 text-blue-400" />
-                      ) : (
+                      ) : ( // Sent but not seen by others yet
                         <Check className="h-4 w-4" />
                       )
                     )}
@@ -504,5 +507,3 @@ export default function ChatClient() {
     </div>
   );
 }
-
-    
