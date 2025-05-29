@@ -5,11 +5,11 @@ import { CheckCircle } from 'lucide-react';
 export default function FeaturesPage() {
   const features = [
     "Classic Tic-Tac-Toe game board.",
-    "Real-time player turns and win detection.",
-    "Game reset functionality.",
-    "Hidden, password-protected chat room.",
-    "Real-time messaging with sender identification.",
-    "User-friendly interface with responsive design.",
+    "Play against AI with multiple difficulty levels (Easy, Medium, Impossible).",
+    "Play online with a friend in real-time.",
+    "Clear player turns and win/draw detection.",
+    "Game reset and retry functionality.",
+    "User-friendly interface with responsive design for all devices.",
     "Modern UI built with ShadCN components and Tailwind CSS.",
   ];
 
@@ -30,7 +30,7 @@ export default function FeaturesPage() {
         </div>
       </main>
       <footer className="py-4 text-center text-sm text-muted-foreground border-t">
-        Naughts & Crosses Communicator &copy; {new Date().getFullYear()}
+        All Games &copy; {new Date().getFullYear()}
       </footer>
     </div>
   );
