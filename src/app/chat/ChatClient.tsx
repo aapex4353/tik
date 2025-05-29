@@ -81,6 +81,10 @@ export default function ChatClient() {
       setUserName(storedName);
       setIsNameSet(true);
     }
+    // Clear app badge when chat client is active
+    if (navigator.clearAppBadge) {
+      navigator.clearAppBadge().catch(err => console.warn("Could not clear app badge:", err));
+    }
   }, []);
 
   const updateUserTypingStatus = useCallback(async (isTyping: boolean) => {
@@ -115,13 +119,10 @@ export default function ChatClient() {
       const msgs: Message[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Basic validation for createdAt
         if (data.createdAt && typeof data.createdAt.toDate === 'function') {
           msgs.push({ id: doc.id, ...data } as Message);
         } else {
-          // Log or handle messages with invalid createdAt
           console.warn("Message with invalid or missing createdAt field:", doc.id, data);
-          // Optionally, push with a null or client-generated timestamp, or filter out
            msgs.push({ id: doc.id, ...data, createdAt: null } as Message);
         }
       });
@@ -169,6 +170,10 @@ export default function ChatClient() {
                  markMessageAsRead(messageId);
                  observedMessagesRef.current.add(messageId); 
               }
+            }
+            // Clear app badge if a message becomes visible (user is active in chat)
+            if (navigator.clearAppBadge) {
+              navigator.clearAppBadge().catch(err => console.warn("Could not clear app badge on message view:", err));
             }
           }
         });
