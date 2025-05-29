@@ -5,7 +5,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col min-h-screen h-screen overflow-hidden"> {/* Ensure full viewport height and prevent body scroll */}
       {/* The main <Header /> component is intentionally removed from this page */}
-      <main className="flex-grow container mx-auto px-2 py-4 md:px-4 md:py-0 flex flex-col items-center overflow-hidden"> {/* Adjusted padding and flex for ChatClient */}
+      <main className="flex-grow container mx-auto px-2 md:px-4 flex flex-col items-center overflow-hidden"> {/* Adjusted padding: removed py-4 and md:py-0 */}
         {/*
           Instructions for Firestore Setup:
           1. Go to your Firebase project console.
